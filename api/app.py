@@ -37,9 +37,7 @@ def deep_stacked_func():
         alert = Alert(message='/warnings route', alert_type='error')
         warnings.warn(Warning(alert))
 
-        print('WARN!')
-
-        return 'function stuff '
+    return 'function stuff ' * n   # must be returned, even after warnings.warn call
 
 
 @router.get("/warnings")
