@@ -119,7 +119,7 @@ while True:
         pass
 ```
 
-To overcome this, I've put the whole `dispach` method inside an `asyncio.Lock`, and it prevents the scrambling, but I'm afraid that with this solution, I've completly destroyed the `async` nature of FastAPI.
+To overcome this, I've put the whole `dispach` logic inside an `asyncio.Lock`, and it prevents the scrambling, but I'm afraid that with this solution, I've completly destroyed the `async` nature of FastAPI.
 
 ```
 LOCK = asyncio.Lock()
