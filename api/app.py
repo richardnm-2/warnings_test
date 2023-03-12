@@ -15,7 +15,7 @@ from starlette.datastructures import MutableHeaders
 from update_response_body import update_response_body
 
 from fastapi.dependencies.utils import get_dependant
-
+from alerts import AlertWarning
 
 app = FastAPI()
 
@@ -24,9 +24,9 @@ router = APIRouter()
 LOCK = asyncio.Lock()
 
 
-class Alert(BaseModel):
-    message: str
-    alert_type: str
+# class Alert(BaseModel):
+#     message: str
+#     alert_type: str
 
 
 def deep_stacked_func():
@@ -35,11 +35,11 @@ def deep_stacked_func():
         Don't want to have to receive a request object to have the session that the call belongs.
         '''
     n = random.randint(1, 10)
-    if n <= 8:
+    if n <= 28:
         # do function stuff
 
-        alert = Alert(message='/warnings route', alert_type='error')
-        warnings.warn(Warning(alert))
+        alert = AlertWarning(message='/warnings route', alert_type='error')
+        # warnings.warn(Warning(alert))
 
     return 'function stuff ' * n   # must be returned, even after warnings.warn call
 
@@ -64,6 +64,8 @@ def alerts_decorator(func):
             return response
 
     return wrapper
+
+# deep_stacked_func()
 
 
 @router.get("/warnings")

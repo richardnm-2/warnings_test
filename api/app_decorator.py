@@ -1,27 +1,20 @@
 import asyncio
-import json
-import os
+from functools import wraps
 import random
 import time
 import warnings
-from pydantic import BaseModel
 
 import uvicorn
-from fastapi import APIRouter, FastAPI, Response
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.concurrency import iterate_in_threadpool
-from starlette.datastructures import MutableHeaders
-
-from update_response_body import update_response_body
-
+from fastapi import APIRouter, FastAPI
 from fastapi.dependencies.utils import get_dependant
+from pydantic import BaseModel
+from alerts import AlertWarning
+from alerts import AlertA
 
 
 app = FastAPI()
 
 router = APIRouter()
-
-LOCK = asyncio.Lock()
 
 
 class Alert(BaseModel):
@@ -35,29 +28,35 @@ def deep_stacked_func():
         Don't want to have to receive a request object to have the session that the call belongs.
         '''
     n = random.randint(1, 10)
-    if n <= 8:
+    if n <= 28:
         # do function stuff
 
-        alert = Alert(message='/warnings route', alert_type='error')
-        warnings.warn(Warning(alert))
+        # alert = AlertWarning(message='/warnings route', alert_type='error')
+        AlertA()
+        # warnings.warn(Warning('Other Warning'))
 
     return 'function stuff ' * n   # must be returned, even after warnings.warn call
 
 
 def alerts_decorator(func):
-    async def wrapper():
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
         with warnings.catch_warnings(record=True) as caught_warnings:
-            warnings.simplefilter("always")
-            response = await func()
+            warnings.filterwarnings("always", category=AlertWarning)
+            response = await func(*args, **kwargs)
 
             warns = []
 
             for warn in caught_warnings:
-                warn_message = warn.message.args[0]
-
-                if isinstance(warn_message, Alert):
+                try:
+                    alert = warn.message.alert
                     warns.append(
-                        {'message': warn_message.message, 'type': warn_message.alert_type})
+                        {'message': alert.message, 'type': alert.alert_type})
+                except AttributeError as e:
+                    if e.name == 'alert':
+                        pass
+                    else:
+                        raise e
 
             if warns:
                 response.update({'alerts': warns})
@@ -74,6 +73,8 @@ async def warnings_route():
     # do route stuff, with function stuff
 
     time.sleep(random.random())
+    time.sleep(50)
+    # await asyncio.sleep(50)
 
     return {"return": "route stuff"}
 
@@ -92,4 +93,4 @@ for route in router.routes:
 app.include_router(router)
 
 if __name__ == '__main__':
-    uvicorn.run('app_decorators:app', host='0.0.0.0', port=8000, reload=True)
+    uvicorn.run('app_decorator:app', host='0.0.0.0', port=8000, reload=True)
