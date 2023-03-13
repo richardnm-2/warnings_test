@@ -5,11 +5,12 @@ import time
 import warnings
 
 import uvicorn
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, FastAPI, Header
 from fastapi.dependencies.utils import get_dependant
 from pydantic import BaseModel
 from alerts import AlertWarning
 from alerts import AlertA
+from middlewares import AlertsLogMiddleware
 
 
 app = FastAPI()
@@ -73,14 +74,14 @@ async def warnings_route():
     # do route stuff, with function stuff
 
     time.sleep(random.random())
-    time.sleep(50)
-    # await asyncio.sleep(50)
+    # time.sleep(50)
+    await asyncio.sleep(50)
 
     return {"return": "route stuff"}
 
 
 @router.get("/no_warnings")
-async def no_warnings_route():
+async def no_warnings_route(analysis_id=Header(default=5)):
     time.sleep(random.random())
     return {"return": "no warning route stuff"}
 
@@ -91,6 +92,7 @@ for route in router.routes:
         path=route.path_format, call=route.endpoint)
 
 app.include_router(router)
+app.add_middleware(AlertsLogMiddleware)
 
 if __name__ == '__main__':
     uvicorn.run('app_decorator:app', host='0.0.0.0', port=8000, reload=True)
