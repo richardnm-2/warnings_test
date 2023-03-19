@@ -5,13 +5,13 @@ import time
 import warnings
 
 import uvicorn
-from fastapi import APIRouter, FastAPI, Header
+from fastapi import APIRouter, Depends, FastAPI, Header, Request
 from fastapi.dependencies.utils import get_dependant
 from pydantic import BaseModel
 from alerts import AlertWarning
 from alerts import AlertA
 from middlewares import AlertsLogMiddleware
-
+from fastapi_wraps import fastapi_wraps, get_request
 
 app = FastAPI()
 
@@ -40,8 +40,14 @@ def deep_stacked_func():
 
 
 def alerts_decorator(func):
-    @wraps(func)
-    async def wrapper(*args, **kwargs):
+
+    @fastapi_wraps(func)
+    async def wrapper(
+        *args,
+        __request: Request = Depends(get_request),
+        **kwargs
+    ):
+        print(__request)
         with warnings.catch_warnings(record=True) as caught_warnings:
             warnings.filterwarnings("always", category=AlertWarning)
             response = await func(*args, **kwargs)
@@ -67,7 +73,9 @@ def alerts_decorator(func):
 
 
 @router.get("/warnings")
-async def warnings_route():
+# @alerts_decorator
+# async def warnings_route(request: Request):
+async def warnings_route(______request: Request):
 
     function_stuff = deep_stacked_func()
 
@@ -75,7 +83,7 @@ async def warnings_route():
 
     time.sleep(random.random())
     # time.sleep(50)
-    await asyncio.sleep(50)
+    await asyncio.sleep(3)
 
     return {"return": "route stuff"}
 
@@ -87,6 +95,8 @@ async def no_warnings_route(analysis_id=Header(default=5)):
 
 
 for route in router.routes:
+    # route.endpoint = route_factory(alerts_decorator(route.endpoint))
+    # route.endpoint = lambda: eval(route.endpoint.__code__, {})
     route.endpoint = alerts_decorator(route.endpoint)
     route.dependendant = get_dependant(
         path=route.path_format, call=route.endpoint)
