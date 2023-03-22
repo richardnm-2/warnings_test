@@ -1,3 +1,4 @@
+import asyncio
 import time
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -8,11 +9,10 @@ from copy import copy, deepcopy
 
 async def write_log_data(request: Request, response: Response, response_body):
     print('Logging...')
-    time.sleep(5)
+    await asyncio.sleep(5)
     print(request.headers.get('analysis-id'))
-    print()
-    print(response_body)
     print('Logged!')
+    print()
     # logger.info(request.method + ' ' + request.url.path,
     #             extra={'extra_info': get_extra_info(request, response)})
 
